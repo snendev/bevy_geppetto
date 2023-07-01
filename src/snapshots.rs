@@ -1,12 +1,12 @@
 use std::time::Duration;
 
-use bevy::prelude::{Added, Camera, Entity, Query, Res};
+use bevy::prelude::{Added, Entity, Query, Res};
 use bevy_capture_media::MediaCapture;
 use clap::Parser;
 
 use crate::{
     directory::{get_input_snapshots_dir, get_video_snapshots_dir},
-    TestLabel,
+    CameraTracker, TestMetadata,
 };
 
 #[derive(Debug, Parser)]
@@ -24,7 +24,7 @@ fn sanitize_label(label: &str) -> String {
     label.replace(" ", "-").to_ascii_lowercase()
 }
 
-pub fn get_or_create_input_snapshot_file(label: &str, snapshot: bool) -> std::fs::File {
+pub(crate) fn get_or_create_input_snapshot_file(label: &str, snapshot: bool) -> std::fs::File {
     let snapshots_dir = get_input_snapshots_dir();
     let snapshot_filename = format!("{}.ron", sanitize_label(label));
     let path = std::path::Path::new(&snapshots_dir).join(&snapshot_filename);
@@ -52,17 +52,33 @@ pub fn get_or_create_input_snapshot_file(label: &str, snapshot: bool) -> std::fs
 const TRACKING_ID: usize = 1000;
 
 // system that captures video snapshots
-pub fn capture_video_snapshots(
+pub(crate) fn capture_video_snapshots(
     mut capture: MediaCapture,
-    test_label: Res<TestLabel>,
-    cameras_query: Query<Entity, Added<Camera>>,
+    test_metadata: Res<TestMetadata>,
+    cameras_query: Query<Entity, Added<CameraTracker>>,
 ) {
-    let entity = cameras_query.get_single().unwrap();
-    // TODO: maybe pass a timer instead...
-    capture.start_tracking_camera(TRACKING_ID, entity, Duration::from_secs(30));
+    for entity in cameras_query.iter() {
+        // TODO: maybe pass a timer instead...
+        capture.start_tracking_camera(
+            TRACKING_ID,
+            entity,
+            Duration::from_secs(test_metadata.duration),
+        );
 
-    let snapshots_dir = get_video_snapshots_dir();
-    let snapshot_filename = test_label.0.clone().replace(" ", "-").to_ascii_lowercase();
-    let path = std::path::Path::new(&snapshots_dir).join(&snapshot_filename);
-    capture.capture_gif_with_path(TRACKING_ID, path)
+        let snapshots_dir = get_video_snapshots_dir();
+        let snapshot_filename = format!("{}.gif", sanitize_label(&test_metadata.label));
+
+        let path = std::path::Path::new(&snapshots_dir).join(&snapshot_filename);
+        println!(
+            "Recording gif of test snapshot at {}",
+            std::env::current_dir()
+                .unwrap()
+                .as_path()
+                .join(&path)
+                .to_str()
+                .unwrap(),
+        );
+
+        capture.capture_gif_with_path(TRACKING_ID, path);
+    }
 }

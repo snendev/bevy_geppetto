@@ -499,7 +499,7 @@ dependencies = [
 [[package]]
 name = "bevy_capture_media"
 version = "0.0.2"
-source = "git+https://github.com/snendev/bevy_capture_media.git?branch=trunk#68750134f1b195997359d2bf6575bcd5a363dbcb"
+source = "git+https://github.com/snendev/bevy_capture_media.git?rev=e0bcad9#e0bcad9608a1fa06d3534dc04b9a892076c21ce7"
 dependencies = [
  "base64 0.20.0",
  "bevy_app",

@@ -31,7 +31,7 @@ pub struct InputEventsRecord {
     pub touch: Vec<TouchInput>,
 }
 
-pub fn capture_input_history_snapshot(
+pub(crate) fn capture_input_history_snapshot(
     mut snapshot_file: ResMut<SnapshotWriter>,
     mut tick_count: Local<u16>,
     // keyboard
@@ -72,7 +72,7 @@ pub fn capture_input_history_snapshot(
 }
 
 // be sure to add this system before bevy::window::close_on_ecs
-pub fn flush_file_writer(
+pub(crate) fn flush_file_writer(
     mut snapshot_file: ResMut<SnapshotWriter>,
     focused_windows: Query<(Entity, &Window)>,
     input: Res<Input<KeyCode>>,
@@ -88,7 +88,7 @@ pub fn flush_file_writer(
     }
 }
 
-pub fn replay_input_history_snapshot(
+pub(crate) fn replay_input_history_snapshot(
     mut snapshot_file: ResMut<SnapshotReader>,
     // keyboard
     mut char_input_events: EventWriter<ReceivedCharacter>,

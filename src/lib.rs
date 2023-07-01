@@ -5,7 +5,7 @@ use std::{
 
 use bevy::{
     app::App,
-    prelude::{IntoSystemConfig, Resource},
+    prelude::{Component, IntoSystemConfig, Resource},
     winit::WinitSettings,
     DefaultPlugins,
 };
@@ -26,17 +26,25 @@ fn on_main_thread() -> bool {
     println!("thread name: {}", thread::current().name().unwrap());
     matches!(thread::current().name(), Some("main"))
 }
+
+#[derive(Resource)]
+pub(crate) struct SnapshotWriter(BufWriter<std::fs::File>);
+#[derive(Resource)]
+pub(crate) struct SnapshotReader(Lines<BufReader<std::fs::File>>);
+#[derive(Resource)]
+pub(crate) struct TestMetadata {
+    label: String,
+    duration: u64,
+}
+
+#[derive(Component)]
+pub struct CameraTracker;
+
 pub struct Test {
     pub label: String,
     pub setup: fn(&mut App),
+    pub capture_duration: u64,
 }
-
-#[derive(Resource)]
-pub struct SnapshotWriter(BufWriter<std::fs::File>);
-#[derive(Resource)]
-pub struct SnapshotReader(Lines<BufReader<std::fs::File>>);
-#[derive(Resource)]
-pub struct TestLabel(String);
 
 impl Test {
     pub fn run(&self) {
@@ -61,7 +69,10 @@ impl Test {
             return_from_run: true,
             ..Default::default()
         })
-        .insert_resource(TestLabel(self.label.clone()))
+        .insert_resource(TestMetadata {
+            label: self.label.clone(),
+            duration: self.capture_duration,
+        })
         .add_plugins(DefaultPlugins)
         .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(BevyCapturePlugin)
