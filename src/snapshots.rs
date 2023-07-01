@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use bevy::prelude::{Added, Entity, Query, Res};
-use bevy_capture_media::MediaCapture;
+// use bevy_capture_media::MediaCapture;
 use clap::Parser;
 
 use crate::{
@@ -52,33 +52,33 @@ pub(crate) fn get_or_create_input_snapshot_file(label: &str, snapshot: bool) -> 
 const TRACKING_ID: usize = 1000;
 
 // system that captures video snapshots
-pub(crate) fn capture_video_snapshots(
-    mut capture: MediaCapture,
-    test_metadata: Res<TestMetadata>,
-    cameras_query: Query<Entity, Added<CameraTracker>>,
-) {
-    for entity in cameras_query.iter() {
-        // TODO: maybe pass a timer instead...
-        capture.start_tracking_camera(
-            TRACKING_ID,
-            entity,
-            Duration::from_secs(test_metadata.duration),
-        );
+// pub(crate) fn capture_video_snapshots(
+//     mut capture: MediaCapture,
+//     test_metadata: Res<TestMetadata>,
+//     cameras_query: Query<Entity, Added<CameraTracker>>,
+// ) {
+//     for entity in cameras_query.iter() {
+//         // TODO: maybe pass a timer instead...
+//         capture.start_tracking_camera(
+//             TRACKING_ID,
+//             entity,
+//             Duration::from_secs(test_metadata.duration),
+//         );
 
-        let snapshots_dir = get_video_snapshots_dir();
-        let snapshot_filename = format!("{}.gif", sanitize_label(&test_metadata.label));
+//         let snapshots_dir = get_video_snapshots_dir();
+//         let snapshot_filename = format!("{}.gif", sanitize_label(&test_metadata.label));
 
-        let path = std::path::Path::new(&snapshots_dir).join(&snapshot_filename);
-        println!(
-            "Recording gif of test snapshot at {}",
-            std::env::current_dir()
-                .unwrap()
-                .as_path()
-                .join(&path)
-                .to_str()
-                .unwrap(),
-        );
+//         let path = std::path::Path::new(&snapshots_dir).join(&snapshot_filename);
+//         println!(
+//             "Recording gif of test snapshot at {}",
+//             std::env::current_dir()
+//                 .unwrap()
+//                 .as_path()
+//                 .join(&path)
+//                 .to_str()
+//                 .unwrap(),
+//         );
 
-        capture.capture_gif_with_path(TRACKING_ID, path);
-    }
-}
+//         capture.capture_gif_with_path(TRACKING_ID, path);
+//     }
+// }

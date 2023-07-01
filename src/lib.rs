@@ -12,7 +12,7 @@ use bevy::{
 
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
-use bevy_capture_media::BevyCapturePlugin;
+// use bevy_capture_media::BevyCapturePlugin;
 
 pub(crate) mod directory;
 
@@ -20,7 +20,7 @@ mod playback;
 use playback::{capture_input_history_snapshot, flush_file_writer, replay_input_history_snapshot};
 
 mod snapshots;
-use snapshots::{capture_video_snapshots, get_or_create_input_snapshot_file, is_snapshot};
+use snapshots::{get_or_create_input_snapshot_file, is_snapshot};
 
 fn on_main_thread() -> bool {
     println!("thread name: {}", thread::current().name().unwrap());
@@ -34,7 +34,7 @@ pub(crate) struct SnapshotReader(Lines<BufReader<std::fs::File>>);
 #[derive(Resource)]
 pub(crate) struct TestMetadata {
     label: String,
-    duration: u64,
+    // duration: u64,
 }
 
 #[derive(Component)]
@@ -43,7 +43,7 @@ pub struct CameraTracker;
 pub struct Test {
     pub label: String,
     pub setup: fn(&mut App),
-    pub capture_duration: u64,
+    // pub capture_duration: u64,
 }
 
 impl Test {
@@ -71,22 +71,22 @@ impl Test {
         })
         .insert_resource(TestMetadata {
             label: self.label.clone(),
-            duration: self.capture_duration,
+            // duration: self.capture_duration,
         })
         .add_plugins(DefaultPlugins)
         .add_plugin(WorldInspectorPlugin::new())
-        .add_plugin(BevyCapturePlugin)
+        // TODO: .add_plugin(BevyCapturePlugin)
         .add_system(bevy::window::close_on_esc);
 
         if is_snapshot {
             app.insert_resource(SnapshotWriter(BufWriter::new(file)))
+                // TODO: .add_system(capture_video_snapshots)
                 .add_system(capture_input_history_snapshot)
                 .add_system(
                     flush_file_writer
                         .before(bevy::window::close_on_esc)
                         .after(capture_input_history_snapshot),
-                )
-                .add_system(capture_video_snapshots);
+                );
         } else {
             app.insert_resource(SnapshotReader(BufReader::new(file).lines()))
                 .add_system(replay_input_history_snapshot);
