@@ -26,7 +26,7 @@ fn sanitize_label(label: &str) -> String {
 
 pub(crate) fn get_or_create_input_snapshot_file(label: &str, snapshot: bool) -> std::fs::File {
     let snapshots_dir = get_input_snapshots_dir();
-    let snapshot_filename = format!("{}.ron", sanitize_label(label));
+    let snapshot_filename = format!("{}.snapshot", sanitize_label(label));
     let path = std::path::Path::new(&snapshots_dir).join(&snapshot_filename);
     println!(
         "{} snapshot at {}",
