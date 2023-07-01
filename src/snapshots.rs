@@ -44,7 +44,7 @@ pub fn get_or_create_input_snapshot_file(label: &str, snapshot: bool) -> std::fs
     } else {
         std::fs::File::open(path)
     }
-    .unwrap();
+    .expect("Missing snapshot file. Don't forget to run in snapshot mode with the -s flag");
 
     file
 }
