@@ -12,11 +12,15 @@ use bevy::{
 
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
-mod cli;
-use cli::{get_or_create_snapshot_file, is_snapshot};
+use bevy_capture_media::BevyCapturePlugin;
+
+pub(crate) mod directory;
 
 mod playback;
 use playback::{capture_input_history_snapshot, flush_file_writer, replay_input_history_snapshot};
+
+mod snapshots;
+use snapshots::{capture_video_snapshots, get_or_create_input_snapshot_file, is_snapshot};
 
 fn on_main_thread() -> bool {
     println!("thread name: {}", thread::current().name().unwrap());
@@ -31,6 +35,8 @@ pub struct Test {
 pub struct SnapshotWriter(BufWriter<std::fs::File>);
 #[derive(Resource)]
 pub struct SnapshotReader(Lines<BufReader<std::fs::File>>);
+#[derive(Resource)]
+pub struct TestLabel(String);
 
 impl Test {
     pub fn run(&self) {
@@ -44,19 +50,21 @@ impl Test {
 
         println!(
             "Running in in {}-mode: {}",
-            if is_snapshot { "capture" } else { "read" },
+            if is_snapshot { "capture" } else { "test" },
             self.label,
         );
         let mut app = App::new();
 
-        let file = get_or_create_snapshot_file(&self.label.clone(), is_snapshot);
+        let file = get_or_create_input_snapshot_file(&self.label.clone(), is_snapshot);
 
         app.insert_resource(WinitSettings {
             return_from_run: true,
             ..Default::default()
         })
+        .insert_resource(TestLabel(self.label.clone()))
         .add_plugins(DefaultPlugins)
         .add_plugin(WorldInspectorPlugin::new())
+        .add_plugin(BevyCapturePlugin)
         .add_system(bevy::window::close_on_esc);
 
         if is_snapshot {
@@ -66,7 +74,8 @@ impl Test {
                     flush_file_writer
                         .before(bevy::window::close_on_esc)
                         .after(capture_input_history_snapshot),
-                );
+                )
+                .add_system(capture_video_snapshots);
         } else {
             app.insert_resource(SnapshotReader(BufReader::new(file).lines()))
                 .add_system(replay_input_history_snapshot);

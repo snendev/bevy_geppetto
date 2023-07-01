@@ -2,7 +2,6 @@
 name = "bevy_geppetto"
 version = "0.1.0"
 authors = ["Sean Sullivan <me@snen.dev>"]
-workspace = "../.."
 edition = "2021"
 license = "MIT OR Apache-2.0"
 publish = false
@@ -13,3 +12,4 @@ bevy-inspector-egui = { version = "0.18" }
 clap = { version = "4.3.10", features = ["derive"] }
 ron = "0.8"
 serde = "1.0.164"
+bevy_capture_media = { git = "https://github.com/snendev/bevy_capture_media.git", branch = "trunk", features = ["gif"] }
