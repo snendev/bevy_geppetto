@@ -16,11 +16,14 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 pub(crate) mod directory;
 
+mod cli;
+use cli::Arguments;
+
 mod playback;
 use playback::{capture_input_history_snapshot, flush_file_writer, replay_input_history_snapshot};
 
 mod snapshots;
-use snapshots::{get_or_create_input_snapshot_file, is_snapshot};
+use snapshots::get_or_create_input_snapshot_file;
 
 fn on_main_thread() -> bool {
     println!("thread name: {}", thread::current().name().unwrap());
@@ -54,16 +57,20 @@ impl Test {
             "Integration test must be run on main thread!"
         );
 
-        let is_snapshot = is_snapshot();
+        let Arguments { capture, replay } = Arguments::parse_args();
 
         println!(
             "Running in in {}-mode: {}",
-            if is_snapshot { "capture" } else { "test" },
+            if capture {
+                "capture"
+            } else if replay {
+                "replay"
+            } else {
+                "sandbox"
+            },
             self.label,
         );
         let mut app = App::new();
-
-        let file = get_or_create_input_snapshot_file(&self.label.clone(), is_snapshot);
 
         app.insert_resource(WinitSettings {
             return_from_run: true,
@@ -78,7 +85,8 @@ impl Test {
         // TODO: .add_plugin(BevyCapturePlugin)
         .add_system(bevy::window::close_on_esc);
 
-        if is_snapshot {
+        if capture {
+            let file = get_or_create_input_snapshot_file(&self.label.clone(), true);
             app.insert_resource(SnapshotWriter(BufWriter::new(file)))
                 // TODO: .add_system(capture_video_snapshots)
                 .add_system(capture_input_history_snapshot)
@@ -87,7 +95,8 @@ impl Test {
                         .before(bevy::window::close_on_esc)
                         .after(capture_input_history_snapshot),
                 );
-        } else {
+        } else if replay {
+            let file = get_or_create_input_snapshot_file(&self.label.clone(), false);
             app.insert_resource(SnapshotReader(BufReader::new(file).lines()))
                 .add_system(replay_input_history_snapshot);
         }
