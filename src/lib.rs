@@ -50,6 +50,10 @@ pub struct Test {
 }
 
 impl Test {
+    pub fn new(label: String, setup: fn(&mut App)) -> Self {
+        Test { label, setup }
+    }
+
     pub fn run(&self) {
         let on_main_thread = on_main_thread();
         assert!(
