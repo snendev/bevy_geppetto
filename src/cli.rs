@@ -4,7 +4,7 @@ use clap::Parser;
 pub struct Arguments {
     #[arg(short, long, default_value_t = false)]
     pub capture: bool,
-    #[arg(short, long, default_value_t = false, conflicts_with = "snapshot")]
+    #[arg(short, long, default_value_t = false, conflicts_with = "capture")]
     pub replay: bool,
 }
 
