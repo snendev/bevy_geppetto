@@ -12,4 +12,14 @@ impl Arguments {
     pub fn parse_args() -> Arguments {
         Arguments::parse()
     }
+
+    pub fn mode<'a>(&'_ self) -> &'a str {
+        if self.capture {
+            "capture"
+        } else if self.replay {
+            "replay"
+        } else {
+            "sandbox"
+        }
+    }
 }

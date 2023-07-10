@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 use crate::{SnapshotReader, SnapshotWriter};
 
 #[derive(Deserialize, Serialize)]
-pub struct InputEventsRecord {
+pub(crate) struct InputEventsRecord {
     pub tick: u16,
     pub characters: Vec<ReceivedCharacter>,
     pub keys: Vec<KeyboardInput>,
