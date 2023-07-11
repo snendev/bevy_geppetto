@@ -8,7 +8,7 @@ publish = false
 
 [dependencies]
 bevy = { version = "0.11", features = [ "serialize" ] }
-# bevy-inspector-egui = { version = "0.18" }
+bevy-inspector-egui = { git = "https://github.com/KMaheshBhat/bevy-inspector-egui", branch = "feature/bevy_0.11_upgrade" }
 clap = { version = "4.3.10", features = ["derive"] }
 ron = "0.8"
 serde = "1.0.164"

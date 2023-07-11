@@ -8,7 +8,7 @@ use bevy::{
     winit::WinitSettings,
 };
 
-// use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 pub(crate) mod directory;
 
@@ -58,13 +58,12 @@ impl Test {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
-        // .add_plugin(WorldInspectorPlugin::new())
+        .add_plugin(WorldInspectorPlugin::new())
         .add_systems(Update, bevy::window::close_on_esc);
 
         if args.capture {
             let file = get_or_create_input_snapshot_file(&self.label.clone(), true);
             app.insert_resource(SnapshotWriter(BufWriter::new(file)))
-                // TODO: .add_system(capture_video_snapshots)
                 .add_systems(
                     PostUpdate,
                     (
