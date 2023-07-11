@@ -58,7 +58,7 @@ impl Test {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
-        .add_plugin(WorldInspectorPlugin::new())
+        .add_plugins(WorldInspectorPlugin::new())
         .add_systems(Update, bevy::window::close_on_esc);
 
         if args.capture {
