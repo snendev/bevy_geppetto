@@ -34,7 +34,7 @@ given Bevy program with the following behaviors attached to `App`:
 
 - DefaultPlugins added, with `return_from_run` specified
 - bevy_inspector_egui::WorldInspectorPlugin added
-- bevy::window::close_on_esc added in the `Update` schedule
+- `bevy::window::close_on_esc` added in the `Update` schedule
 
 Inputs are saved in the `snapshots` directory under a subdirectory `inputs`. The
 root of the snapshot directory can be changed with the `SNAPSHOTS_DIR` env
