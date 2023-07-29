@@ -1,7 +1,7 @@
 use bevy::{
     prelude::{
         shape, App, Assets, Camera2dBundle, Color, ColorMaterial, Commands, Component, FixedUpdate,
-        Input, KeyCode, Mesh, Query, Res, ResMut, Startup, Transform, Vec3, With,
+        Input, KeyCode, Mesh, Query, Res, ResMut, Startup, Transform, With,
     },
     sprite::MaterialMesh2dBundle,
 };
