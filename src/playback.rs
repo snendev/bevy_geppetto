@@ -31,6 +31,7 @@ pub(crate) struct InputEventsRecord {
     pub touch: Vec<TouchInput>,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn capture_input_history_snapshot(
     mut snapshot_file: ResMut<SnapshotWriter>,
     mut tick_count: Local<u16>,
@@ -67,8 +68,8 @@ pub(crate) fn capture_input_history_snapshot(
     *tick_count += 1;
 
     let text = ron::ser::to_string(&record).unwrap();
-    snapshot_file.0.write(text.as_bytes()).unwrap();
-    snapshot_file.0.write(b"\n").unwrap();
+    snapshot_file.0.write_all(text.as_bytes()).unwrap();
+    snapshot_file.0.write_all(b"\n").unwrap();
 }
 
 // be sure to add this system before bevy::window::close_on_ecs
@@ -88,6 +89,7 @@ pub(crate) fn flush_file_writer(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn replay_input_history_snapshot(
     mut snapshot_file: ResMut<SnapshotReader>,
     // keyboard

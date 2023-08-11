@@ -1,13 +1,13 @@
 use crate::directory::get_input_snapshots_dir;
 
 fn sanitize_label(label: &str) -> String {
-    label.replace(" ", "-").to_ascii_lowercase()
+    label.replace(' ', "-").to_ascii_lowercase()
 }
 
 pub(crate) fn get_or_create_input_snapshot_file(label: &str, capture: bool) -> std::fs::File {
     let snapshots_dir = get_input_snapshots_dir();
     let snapshot_filename = format!("{}.snapshot", sanitize_label(label));
-    let path = std::path::Path::new(&snapshots_dir).join(&snapshot_filename);
+    let path = std::path::Path::new(&snapshots_dir).join(snapshot_filename);
     println!(
         "{} snapshot at {}",
         if capture { "Saving" } else { "Opening" },
@@ -19,12 +19,11 @@ pub(crate) fn get_or_create_input_snapshot_file(label: &str, capture: bool) -> s
             .unwrap(),
     );
     let path = path.to_str().unwrap();
-    let file = if capture {
+
+    if capture {
         std::fs::File::create(path)
     } else {
         std::fs::File::open(path)
     }
-    .expect("Missing snapshot file. Don't forget to run in snapshot mode with the -s flag");
-
-    file
+    .expect("Missing snapshot file. Don't forget to run in snapshot mode with the -s flag")
 }
