@@ -7,7 +7,7 @@ use bevy::{
     log::{Level, LogPlugin},
     prelude::{
         App, DefaultPlugins, IntoSystemConfigs, PluginGroup, PostUpdate, PreUpdate, Resource,
-        Update,
+        Update, Window, WindowPlugin,
     },
     winit::WinitSettings,
 };
@@ -61,10 +61,20 @@ impl Test {
             return_from_run: true,
             ..Default::default()
         })
-        .add_plugins(DefaultPlugins.set(LogPlugin {
-            level: Level::DEBUG,
-            ..Default::default()
-        }))
+        .add_plugins(
+            DefaultPlugins
+                .set(LogPlugin {
+                    level: Level::DEBUG,
+                    ..Default::default()
+                })
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        title: format!("Test - {}", self.label),
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                }),
+        )
         .add_plugins(WorldInspectorPlugin::new())
         .add_systems(Update, bevy::window::close_on_esc);
 
