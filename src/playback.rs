@@ -54,16 +54,16 @@ pub(crate) fn capture_input_history_snapshot(
 ) {
     let record = InputEventsRecord {
         tick: *tick_count,
-        characters: char_input_events.iter().cloned().collect(),
-        keys: keyboard_input_events.iter().cloned().collect(),
-        mouse_buttons: mouse_button_input_events.iter().cloned().collect(),
-        mouse_wheel: mouse_wheel_events.iter().cloned().collect(),
-        mouse_motion: mouse_motion_events.iter().cloned().collect(),
-        cursor_motion: cursor_moved_events.iter().cloned().collect(),
-        gamepad_connection: gamepad_connection_events.iter().cloned().collect(),
-        gamepad_axis: gamepad_axis_events.iter().cloned().collect(),
-        gamepad_button: gamepad_button_events.iter().cloned().collect(),
-        touch: touch_events.iter().cloned().collect(),
+        characters: char_input_events.read().cloned().collect(),
+        keys: keyboard_input_events.read().cloned().collect(),
+        mouse_buttons: mouse_button_input_events.read().cloned().collect(),
+        mouse_wheel: mouse_wheel_events.read().cloned().collect(),
+        mouse_motion: mouse_motion_events.read().cloned().collect(),
+        cursor_motion: cursor_moved_events.read().cloned().collect(),
+        gamepad_connection: gamepad_connection_events.read().cloned().collect(),
+        gamepad_axis: gamepad_axis_events.read().cloned().collect(),
+        gamepad_button: gamepad_button_events.read().cloned().collect(),
+        touch: touch_events.read().cloned().collect(),
     };
     *tick_count += 1;
 

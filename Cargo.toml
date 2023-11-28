@@ -7,11 +7,11 @@ license = "MIT OR Apache-2.0"
 publish = false
 
 [dependencies]
-bevy = { version = "0.11", features = [ "serialize" ] }
-bevy-inspector-egui = { version = "0.19" }
+bevy = { version = "0.12", features = ["serialize"] }
+bevy-inspector-egui = { version = "0.21" }
 clap = { version = "4.3.10", features = ["derive"] }
 ron = "0.8"
-serde = "1.0.164"
+serde = "1.0"
 
 [[example]]
 name = "basic"
