@@ -7,7 +7,8 @@ use bevy::{
         mouse::{MouseButtonInput, MouseMotion, MouseWheel},
     },
     prelude::{
-        Entity, EventReader, EventWriter, Input, KeyCode, Local, Query, Res, ResMut, TouchInput,
+        Commands, Entity, EventReader, EventWriter, Local, Query, ResMut,
+        TouchInput, With,
     },
     window::{CursorMoved, ReceivedCharacter, Window},
 };
@@ -17,7 +18,7 @@ use serde::{Deserialize, Serialize};
 use crate::{SnapshotReader, SnapshotWriter};
 
 #[derive(Deserialize, Serialize)]
-pub(crate) struct InputEventsRecord {
+struct InputEventsRecord {
     pub tick: u16,
     pub characters: Vec<ReceivedCharacter>,
     pub keys: Vec<KeyboardInput>,
@@ -72,25 +73,10 @@ pub(crate) fn capture_input_history_snapshot(
     snapshot_file.0.write_all(b"\n").unwrap();
 }
 
-// be sure to add this system before bevy::window::close_on_ecs
-pub(crate) fn flush_file_writer(
-    mut snapshot_file: ResMut<SnapshotWriter>,
-    focused_windows: Query<(Entity, &Window)>,
-    input: Res<Input<KeyCode>>,
-) {
-    for (_window, focus) in focused_windows.iter() {
-        if !focus.focused {
-            continue;
-        }
-
-        if input.just_pressed(KeyCode::Escape) {
-            snapshot_file.0.flush().unwrap();
-        }
-    }
-}
-
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn replay_input_history_snapshot(
+    mut commands: Commands,
+    windows: Query<Entity, With<Window>>,
     mut snapshot_file: ResMut<SnapshotReader>,
     // keyboard
     mut char_input_events: EventWriter<ReceivedCharacter>,
@@ -121,5 +107,9 @@ pub(crate) fn replay_input_history_snapshot(
         gamepad_axis_events.send_batch(record.gamepad_axis);
         gamepad_button_events.send_batch(record.gamepad_button);
         touch_events.send_batch(record.touch);
+    } else {
+        for window in windows.iter() {
+            commands.entity(window).despawn();
+        }
     }
 }

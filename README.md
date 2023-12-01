@@ -42,13 +42,14 @@ variable. The filename of the snapshot will be a kebab-case version of the
 string passed as the test's `label`, and contains one serialized RON object with
 all input events per line.
 
-To capture inputs during a test run, pass the `-c` flag like so:
+To capture inputs during a test run, pass the `-c` flag and a rate for registering
+the screen-captures:
 
 ```sh
-cargo test --test $TEST_NAME -- -c
+cargo test --test $TEST_NAME -- -c $FRAMES_PER_SEC
 ```
 
-To replay inputs from a previous snapshot, pass the `-r` flag similarly:
+To replay inputs from a previous snapshot, pass the `-r` flag:
 
 ```sh
 cargo test --test $TEST_NAME -- -r

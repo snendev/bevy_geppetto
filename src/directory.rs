@@ -17,11 +17,20 @@ pub(crate) fn get_input_snapshots_dir() -> std::path::PathBuf {
     inputs_dir
 }
 
-pub(crate) fn _get_screenshots_dir() -> std::path::PathBuf {
+pub(crate) fn get_screenshots_dir() -> std::path::PathBuf {
     let snapshots_dir = get_snapshots_dir();
-    let videos_dir = Path::new(&snapshots_dir).join("screenshots");
-    if !videos_dir.exists() {
-        std::fs::create_dir(&videos_dir).unwrap();
+    let screenshots_dir = Path::new(&snapshots_dir).join("screenshots");
+    if !screenshots_dir.exists() {
+        std::fs::create_dir(&screenshots_dir).unwrap();
     }
-    videos_dir
+    screenshots_dir
+}
+
+pub(crate) fn get_gifs_dir() -> std::path::PathBuf {
+    let snapshots_dir = get_snapshots_dir();
+    let gifs_dir = Path::new(&snapshots_dir).join("gifs");
+    if !gifs_dir.exists() {
+        std::fs::create_dir(&gifs_dir).unwrap();
+    }
+    gifs_dir
 }
