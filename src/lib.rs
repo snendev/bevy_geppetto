@@ -1,177 +1,155 @@
-use std::{
-    io::{BufRead, BufReader, BufWriter, Lines, Write},
-    thread,
-    time::Duration,
+use std::io::{BufRead, BufReader, BufWriter, Lines, Write};
+
+use bevy::prelude::{
+    resource_exists, App, Commands, Event, EventReader, IntoSystemConfigs, Last, Plugin,
+    PostUpdate, PreUpdate, Res, ResMut, Resource,
 };
-
-use bevy::{
-    ecs::schedule::OnEnter,
-    log::{info, Level, LogPlugin},
-    prelude::{
-        in_state, App, Commands, DefaultPlugins, Entity, Input, IntoSystemConfigs, KeyCode,
-        NextState, PluginGroup, PostUpdate, PreUpdate, Query, Res, ResMut, Resource, Startup,
-        States, Update, Window, WindowPlugin, With,
-    },
-    winit::WinitSettings,
-};
-
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
-
-pub(crate) mod directory;
-use crate::{directory::get_screenshots_dir, systems::encode_gif};
-
-mod cli;
-use cli::Arguments;
-
-mod files;
-use files::{get_or_create_input_snapshot_file, sanitize_label};
 
 mod systems;
-use systems::{
-    capture_input_history_snapshot, read_recording_rate, receive_images,
-    replay_input_history_snapshot, save_recording_rate, take_screenshots, PlaybackFrames,
-    RecordingRate,
-};
+use systems::{capture_input_history_snapshot, replay_input_history_snapshot};
 
-fn on_main_thread() -> bool {
-    println!("thread name: {}", thread::current().name().unwrap());
-    matches!(thread::current().name(), Some("main"))
-}
-
-#[derive(Resource)]
-pub(crate) struct SnapshotWriter(BufWriter<std::fs::File>);
-#[derive(Resource)]
-pub(crate) struct SnapshotReader(Lines<BufReader<std::fs::File>>);
-
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, States)]
-pub enum TestState {
-    #[default]
-    Active,
-    PendingClose,
-    Shutdown,
-}
-
-// modelled after bevy::window::close_on_ecs, but sets state to PendingClose instead
-pub(crate) fn begin_unwinding_on_escape(
-    input: Res<Input<KeyCode>>,
-    mut state: ResMut<NextState<TestState>>,
-) {
-    if input.just_pressed(KeyCode::Escape) {
-        state.set(TestState::PendingClose);
+impl SnapshotEvent {
+    pub fn record(label: String) -> Self {
+        Self::Record { label }
     }
-}
 
-// add this system before any system that closes the app
-pub(crate) fn flush_file_writers(mut snapshot_file: ResMut<SnapshotWriter>) {
-    snapshot_file.0.flush().unwrap();
-}
+    pub fn playback(label: String) -> Self {
+        Self::Playback { label }
+    }
 
-// despawns all windows to close the application
-pub(crate) fn close_windows(mut commands: Commands, windows: Query<Entity, With<Window>>) {
-    for window in windows.iter() {
-        commands.entity(window).despawn();
+    pub fn stop() -> Self {
+        Self::Stop
     }
 }
 
 #[derive(Resource)]
-pub struct TestConfiguration {
-    pub label: String,
-    pub sanitized_label: String,
+pub struct GeppettoConfig {
+    pub snapshots_dir: String,
 }
 
-pub struct Test {
-    pub label: String,
-    pub setup: fn(&mut App),
+impl Default for GeppettoConfig {
+    fn default() -> Self {
+        let snapshots_dir = std::env::var("SNAPSHOTS_DIR").unwrap_or(".snapshots".to_string());
+        if !std::path::Path::new(&snapshots_dir).exists() {
+            std::fs::create_dir(&snapshots_dir).unwrap();
+        }
+        Self { snapshots_dir }
+    }
 }
 
-impl Test {
-    pub fn new(label: String, setup: fn(&mut App)) -> Self {
-        Test { label, setup }
+impl GeppettoConfig {
+    pub fn directory(&self) -> &str {
+        self.snapshots_dir.as_str()
     }
 
-    pub fn run(&self) {
-        let on_main_thread = on_main_thread();
-        assert!(
-            on_main_thread,
-            "Integration test must be run on main thread!"
-        );
-
-        let args = Arguments::parse_args();
-        let screenshots_dir = get_screenshots_dir();
-
-        println!("Running in {}-mode: {}", args.mode(), self.label);
-        let mut app = App::new();
-
-        app.insert_resource(WinitSettings {
-            return_from_run: true,
-            ..Default::default()
-        })
-        .insert_resource(TestConfiguration {
-            label: self.label.clone(),
-            sanitized_label: sanitize_label(self.label.as_str()),
-        })
-        .add_plugins(
-            DefaultPlugins
-                .set(LogPlugin {
-                    level: Level::DEBUG,
-                    ..Default::default()
-                })
-                .set(WindowPlugin {
-                    primary_window: Some(Window {
-                        title: format!("Test - {}", self.label),
-                        ..Default::default()
-                    }),
-                    ..Default::default()
-                }),
-        )
-        .add_plugins(WorldInspectorPlugin::new());
-
-        if let Some(recording_rate) = args.capture {
-            // first delete any existing screenshots
-            std::fs::remove_dir_all(&screenshots_dir).unwrap();
-
-            let file = get_or_create_input_snapshot_file(&self.label.clone(), true);
-            app.insert_resource(SnapshotWriter(BufWriter::new(file)))
-                .init_resource::<PlaybackFrames>()
-                .insert_resource(RecordingRate::new(Duration::from_millis(recording_rate)))
-                .add_state::<TestState>()
-                .add_systems(Startup, save_recording_rate)
-                .add_systems(
-                    PostUpdate,
-                    (
-                        begin_unwinding_on_escape,
-                        capture_input_history_snapshot,
-                        take_screenshots,
-                    )
-                        .chain()
-                        .run_if(in_state(TestState::Active)),
-                )
-                .add_systems(OnEnter(TestState::PendingClose), flush_file_writers)
-                .add_systems(PostUpdate, receive_images)
-                .add_systems(
-                    PostUpdate,
-                    encode_gif.run_if(in_state(TestState::PendingClose)),
-                )
-                .add_systems(OnEnter(TestState::Shutdown), close_windows);
-        } else if args.replay {
-            let file = get_or_create_input_snapshot_file(&self.label.clone(), false);
-            app.insert_resource(SnapshotReader(BufReader::new(file).lines()))
-                .add_systems(Startup, read_recording_rate)
-                .add_systems(PreUpdate, replay_input_history_snapshot);
-        } else {
-            app.add_systems(Update, bevy::window::close_on_esc);
+    pub fn make_path(&self, label: &str) -> std::path::PathBuf {
+        fn sanitize_label(label: &str) -> String {
+            label.replace(' ', "-").to_ascii_lowercase()
         }
 
-        (self.setup)(&mut app);
-        app.run();
+        std::path::Path::new(&self.snapshots_dir)
+            .join(sanitize_label(label))
+            .with_extension("snapshot")
+    }
+}
 
-        // once app is cleaned up, check the screenshots!
+pub struct GeppettoPlugin;
 
-        info!(
-            "Screenshots taken: {}, view gif",
-            std::fs::read_dir(&screenshots_dir)
-                .map(|iter| iter.count())
-                .unwrap_or(0),
-        );
+impl Plugin for GeppettoPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<GeppettoConfig>()
+            .add_event::<SnapshotEvent>()
+            .add_systems(
+                PreUpdate,
+                replay_input_history_snapshot.run_if(resource_exists::<SnapshotReader>()),
+            )
+            .add_systems(
+                PostUpdate,
+                capture_input_history_snapshot.run_if(resource_exists::<SnapshotWriter>()),
+            )
+            .add_systems(Last, handle_events);
+    }
+}
+
+#[derive(Clone, Debug, Event)]
+pub enum SnapshotEvent {
+    Record { label: String },
+    Playback { label: String },
+    Stop,
+}
+
+#[derive(Resource)]
+pub struct SnapshotWriter {
+    pub writer: BufWriter<std::fs::File>,
+    pub label: String,
+}
+
+impl SnapshotWriter {
+    pub fn create(
+        path: impl AsRef<std::path::Path>,
+        label: String,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        let file = std::fs::File::create(path)?;
+        Ok(Self {
+            writer: BufWriter::new(file),
+            label,
+        })
+    }
+}
+
+#[derive(Resource)]
+pub struct SnapshotReader {
+    pub reader: Lines<BufReader<std::fs::File>>,
+    pub label: String,
+}
+
+impl SnapshotReader {
+    pub fn create(
+        path: impl AsRef<std::path::Path>,
+        label: String,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        let file = std::fs::File::open(path)?;
+        Ok(Self {
+            reader: BufReader::new(file).lines(),
+            label,
+        })
+    }
+}
+
+fn handle_events(
+    mut commands: Commands,
+    config: Res<GeppettoConfig>,
+    mut events: EventReader<SnapshotEvent>,
+    mut writer: Option<ResMut<SnapshotWriter>>,
+    reader: Option<Res<SnapshotReader>>,
+) {
+    for event in events.read() {
+        if reader.is_some() {
+            commands.remove_resource::<SnapshotReader>();
+        }
+        if let Some(writer) = writer.as_mut() {
+            writer
+                .writer
+                .flush()
+                .expect("BufWriter to flush contents successfully");
+            commands.remove_resource::<SnapshotWriter>();
+        }
+        match event {
+            SnapshotEvent::Record { label } => {
+                let path = config.make_path(label.as_str());
+                commands.insert_resource(
+                    SnapshotWriter::create(path, label.to_string())
+                        .expect("writer to be a valid file path"),
+                );
+            }
+            SnapshotEvent::Playback { label } => {
+                let path = config.make_path(label.as_str());
+                commands.insert_resource(
+                    SnapshotReader::create(path, label.to_string())
+                        .expect("reader to be a valid file path"),
+                );
+            }
+            SnapshotEvent::Stop => {}
+        };
     }
 }

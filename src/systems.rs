@@ -7,10 +7,9 @@ use bevy::{
         mouse::{MouseButtonInput, MouseMotion, MouseWheel},
     },
     prelude::{
-        Commands, Entity, EventReader, EventWriter, Local, Query, ResMut,
-        TouchInput, With,
+        Commands, CursorMoved, EventReader, EventWriter, Local, ReceivedCharacter, ResMut,
+        TouchInput,
     },
-    window::{CursorMoved, ReceivedCharacter, Window},
 };
 
 use serde::{Deserialize, Serialize};
@@ -69,14 +68,13 @@ pub(crate) fn capture_input_history_snapshot(
     *tick_count += 1;
 
     let text = ron::ser::to_string(&record).unwrap();
-    snapshot_file.0.write_all(text.as_bytes()).unwrap();
-    snapshot_file.0.write_all(b"\n").unwrap();
+    snapshot_file.writer.write_all(text.as_bytes()).unwrap();
+    snapshot_file.writer.write_all(b"\n").unwrap();
 }
 
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn replay_input_history_snapshot(
     mut commands: Commands,
-    windows: Query<Entity, With<Window>>,
     mut snapshot_file: ResMut<SnapshotReader>,
     // keyboard
     mut char_input_events: EventWriter<ReceivedCharacter>,
@@ -95,7 +93,7 @@ pub(crate) fn replay_input_history_snapshot(
     // mut touchpad_magnify_events: EventReader<TouchpadMagnify>, // bevy 0.11
     // mut touchpad_rotate_events: EventReader<TouchpadRotate>, // bevy 0.11
 ) {
-    if let Some(history) = snapshot_file.0.next() {
+    if let Some(history) = snapshot_file.reader.next() {
         let record: InputEventsRecord = ron::de::from_str(&history.unwrap()).unwrap();
         char_input_events.send_batch(record.characters);
         keyboard_input_events.send_batch(record.keys);
@@ -108,8 +106,7 @@ pub(crate) fn replay_input_history_snapshot(
         gamepad_button_events.send_batch(record.gamepad_button);
         touch_events.send_batch(record.touch);
     } else {
-        for window in windows.iter() {
-            commands.entity(window).despawn();
-        }
+        // TODO: fire SnapshotEvent::Stop instead?
+        commands.remove_resource::<SnapshotReader>();
     }
 }

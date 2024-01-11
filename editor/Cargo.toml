@@ -1,0 +1,21 @@
+
+[package]
+name = "bevy_geppetto_editor_window"
+version = "0.1.0"
+edition = "2021"
+authors = ["Sean Sullivan <me@snen.dev>"]
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/snendev/bevy-reactive-blueprints"
+
+[dependencies]
+bevy_geppetto = { path = "../" }
+bevy = { version = "0.12", default-features = false, features = [
+    "tonemapping_luts",
+] }
+bevy_editor_pls = "0.7"
+iyes_scene_tools = "0.2.0"
+
+[[example]]
+name = "editor"
+path = "examples/basic.rs"
