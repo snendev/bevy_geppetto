@@ -3,6 +3,8 @@ use bevy_editor_pls::{
     editor_window::{EditorWindow, EditorWindowContext},
     egui_dock::egui,
 };
+
+pub use bevy_geppetto as geppetto;
 use bevy_geppetto::*;
 
 pub enum EditorOpenSetting {
