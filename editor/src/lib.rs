@@ -34,9 +34,7 @@ impl EditorWindow for GeppettoWindow {
                 .desired_width(120.0)
                 .show(ui);
 
-            let enter_pressed: bool = ui.input(|input| input.key_pressed(egui::Key::Enter));
-
-            if ui.button("Record").clicked() || enter_pressed {
+            if ui.button("Record").clicked()  {
                 let filename = if state.filename.is_empty() {
                     DEFAULT_FILENAME
                 } else {
