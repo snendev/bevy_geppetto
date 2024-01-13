@@ -27,14 +27,13 @@ impl EditorWindow for GeppettoWindow {
 
     fn ui(world: &mut World, mut cx: EditorWindowContext, ui: &mut egui::Ui) {
         let state = cx.state_mut::<GeppettoWindow>().unwrap();
-
         ui.horizontal(|ui| {
             egui::TextEdit::singleline(&mut state.filename)
                 .hint_text(DEFAULT_FILENAME)
                 .desired_width(120.0)
                 .show(ui);
 
-            if ui.button("Record").clicked()  {
+            if ui.button("Record").clicked() {
                 let filename = if state.filename.is_empty() {
                     DEFAULT_FILENAME
                 } else {
