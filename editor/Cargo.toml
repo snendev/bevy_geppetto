@@ -14,7 +14,6 @@ bevy = { version = "0.12", default-features = false, features = [
     "tonemapping_luts",
 ] }
 bevy_editor_pls = "0.7"
-iyes_scene_tools = "0.2.0"
 
 [[example]]
 name = "editor"
