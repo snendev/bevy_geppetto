@@ -34,20 +34,26 @@ pub fn main() {
 fn ui(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
     commands
-        .spawn(NodeBundle {
-            style: Style {
-                height: Val::Percent(100.),
-                width: Val::Percent(100.),
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::Center,
+        .spawn((
+            Name::new("UI Root"),
+            NodeBundle {
+                style: Style {
+                    height: Val::Percent(100.),
+                    width: Val::Percent(100.),
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Center,
+                    ..Default::default()
+                },
                 ..Default::default()
             },
-            ..Default::default()
-        })
+        ))
         .with_children(|builder| {
-            builder.spawn(TextBundle {
-                ..Default::default()
-            });
+            builder.spawn((
+                Name::new("Text"),
+                TextBundle {
+                    ..Default::default()
+                },
+            ));
         });
 }
 

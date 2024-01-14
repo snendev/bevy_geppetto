@@ -17,4 +17,4 @@ bevy_editor_pls = "0.7"
 
 [[example]]
 name = "editor"
-path = "examples/basic.rs"
+path = "examples/editor.rs"
